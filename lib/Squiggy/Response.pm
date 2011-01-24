@@ -9,6 +9,7 @@ sub new {
 
   my $self = bless {cb => $cb}, $class;
   $self->status(200);
+  $self->content_type("text/html");
 
   $self;
 }
@@ -20,6 +21,7 @@ sub send {
   die "sending on a streaming response" if $self->{writer};
 
   $self->body($body) if defined $body;
+  $self->content_length(length $self->body);
   
   $self->{cb}->($self->SUPER::finalize);
   $self->{closed} = 1;

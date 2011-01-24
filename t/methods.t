@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 $Plack::Test::Impl = "Server";
-my $app = Plack::Util::load_psgi("t/basic_app.psgi");
+my $app = Plack::Util::load_psgi("t/sample/app.psgi");
 
 test_psgi(
   $app,

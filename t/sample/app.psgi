@@ -23,3 +23,7 @@ get "/writer" => sub {
     }
   };
 };
+
+websocket "/websocket" => sub {
+  my ($req, $ws) = @_;
+};

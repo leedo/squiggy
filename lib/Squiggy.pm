@@ -3,9 +3,13 @@ package Squiggy;
 use Squiggy::Request;
 use Squiggy::Response;
 use Router::Simple;
+use Plack::Middleware::WebSocket;
+
+use strict;
+use warnings;
 
 use base "Exporter";
-our @EXPORT = qw/get post any/;
+our @EXPORT = qw/get post any websocket/;
 our %routers;
 
 sub router {
@@ -14,10 +18,10 @@ sub router {
 }
 
 sub to_psgi {
-  $package = $_[0] || caller(0);
+  my $package = $_[0] || caller(0);
   my $router = router $package;
 
-  return sub {
+  my $app = sub {
     my $env = shift;
     if (my $p = $router->match($env)) {
       return sub {
@@ -30,11 +34,28 @@ sub to_psgi {
       return [404, [], ['not found']];
     }
   };
+  Plack::Middleware::WebSocket->wrap($app);
 }
 
 sub add_route {
   my ($method, $package, $route, $sub) = @_;
   my $router = router $package;
+  
+  if ($method eq "WEBSOCKET") {
+    $method = "GET";
+    my $orig = $sub;
+    $sub = sub {
+      my ($req, $res) = @_;
+      if (my $fh = $req->env->{'websocket.impl'}->handshake) {
+        $orig->($req, $fh);
+      }
+      else {
+        $res->code($req->env->{'websocket.impl'}->error_code);
+        $res->send;
+      }
+    };
+  }
+
   $router->connect($route,
     { code => $sub },
     { method => $method },
@@ -43,7 +64,8 @@ sub add_route {
   to_psgi $package; 
 }
 
-for my $method (qw/get post any/) {
+for my $method (qw/get post any websocket/) {
+  no strict;
   *{__PACKAGE__."::$method"} = sub {
     my $package = caller(0);
     add_route uc $method, $package, @_;
