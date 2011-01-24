@@ -1,6 +1,7 @@
 package Squiggy;
 
 use Squiggy::Request;
+use Squiggy::Response;
 use Router::Simple;
 
 use base "Exporter";
