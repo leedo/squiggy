@@ -25,35 +25,42 @@ sub to_psgi {
     my $env = shift;
     if (my $p = $router->match($env)) {
       return sub {
-        my $req = Squiggy::Request->new($env, shift);
+        my $respond = shift;
+        my $cb = delete $p->{code};
+        my $req = Squiggy::Request->new($env, $respond, $p);
         my $res = $req->new_response(200);
-        $p->{code}->($req, $res);
+        $cb->($req, $res);
       };
     }
     else {
       return [404, [], ['not found']];
     }
   };
+
   Plack::Middleware::WebSocket->wrap($app);
+}
+
+sub wrap_websocket {
+  my $orig = shift;
+  return sub {
+    my ($req, $res) = @_;
+    if (my $fh = $req->env->{'websocket.impl'}->handshake) {
+      $orig->($req, $fh);
+    }
+    else {
+      $res->code($req->env->{'websocket.impl'}->error_code);
+      $res->send;
+    }
+  };
 }
 
 sub add_route {
   my ($method, $package, $route, $sub) = @_;
   my $router = router $package;
-  
+
   if ($method eq "WEBSOCKET") {
     $method = "GET";
-    my $orig = $sub;
-    $sub = sub {
-      my ($req, $res) = @_;
-      if (my $fh = $req->env->{'websocket.impl'}->handshake) {
-        $orig->($req, $fh);
-      }
-      else {
-        $res->code($req->env->{'websocket.impl'}->error_code);
-        $res->send;
-      }
-    };
+    $sub = wrap_websocket $sub;
   }
 
   $router->connect($route,

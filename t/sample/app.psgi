@@ -3,7 +3,7 @@ use AnyEvent;
 
 get "/index" => sub {
   my ($req, $res) = @_;
-  my $t; $t = AE::timer 3, 0, sub {
+  my $t; $t = AE::timer 0.5, 0, sub {
     $res->send("hi there");
     undef $t;
   };
@@ -22,6 +22,12 @@ get "/writer" => sub {
       undef $t;
     }
   };
+};
+
+get "/{id:[0-9]+}" => sub {
+  my ($req, $res) = @_;
+
+  $res->send($req->captures->{id});
 };
 
 websocket "/websocket" => sub {
