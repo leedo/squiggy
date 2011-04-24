@@ -33,9 +33,10 @@ sub write {
   die "writing on a closed response" if $self->{closed};
 
   if (!$self->{writer}) {
-    my $response = $self->SUPER::finalize;
-    $self->{writer} = $self->{cb}->([@$response[0,1]]);
-    $self->{writer}->write($response[2]) if $response[2];
+    my $res = $self->SUPER::finalize;
+    $self->{writer} = $self->{cb}->([@$res[0,1]]);
+    $self->{writer}->write(join "", @{$res->[2]})
+      if $res->[2] and ref $res->[2] eq "ARRAY";
   }
   
   $self->{writer}->write($chunk);

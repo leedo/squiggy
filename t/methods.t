@@ -25,17 +25,6 @@ test_psgi(
   $app,
   sub {
     my $cb = shift;
-    my $req = GET "http://localhost/writer";
-    my $res = $cb->($req);
-    is $res->code, 200;
-    is $res->content, "9876543210";
-  }
-);
-
-test_psgi(
-  $app,
-  sub {
-    my $cb = shift;
     my $req = GET "http://localhost/1";
     my $res = $cb->($req);
     is $res->code, 200;

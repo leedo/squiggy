@@ -36,7 +36,6 @@ sub to_psgi {
     }
   };
 
-  Plack::Middleware::WebSocket->wrap($app);
 }
 
 sub add_route {

@@ -24,6 +24,23 @@ get "/writer" => sub {
   };
 };
 
+get "/writer_body" => sub {
+  my ($req, $res) = @_;
+
+  $res->body("initial body");
+ 
+  my $limit = 10;
+  my $t; $t = AE::timer 0, 0.1, sub {
+    if ($limit-- > 0) {
+      $res->write($limit);
+    }
+    else {
+      $res->close;
+      undef $t;
+    }
+  };
+};
+
 get "/{id:[0-9]+}" => sub {
   my ($req, $res) = @_;
 
