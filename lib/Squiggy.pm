@@ -3,13 +3,12 @@ package Squiggy;
 use Squiggy::Request;
 use Squiggy::Response;
 use Router::Simple;
-use Plack::Middleware::WebSocket;
 
 use strict;
 use warnings;
 
 use base "Exporter";
-our @EXPORT = qw/get post any websocket/;
+our @EXPORT = qw/get post any timer/;
 our %routers;
 
 sub router {
@@ -40,28 +39,9 @@ sub to_psgi {
   Plack::Middleware::WebSocket->wrap($app);
 }
 
-sub wrap_websocket {
-  my $orig = shift;
-  return sub {
-    my ($req, $res) = @_;
-    if (my $fh = $req->env->{'websocket.impl'}->handshake) {
-      $orig->($req, $fh);
-    }
-    else {
-      $res->code($req->env->{'websocket.impl'}->error_code);
-      $res->send;
-    }
-  };
-}
-
 sub add_route {
   my ($method, $package, $route, $sub) = @_;
   my $router = router $package;
-
-  if ($method eq "WEBSOCKET") {
-    $method = "GET";
-    $sub = wrap_websocket $sub;
-  }
 
   $router->connect($route,
     { code => $sub },
@@ -71,7 +51,7 @@ sub add_route {
   to_psgi $package; 
 }
 
-for my $method (qw/get post any websocket/) {
+for my $method (qw/get post any/) {
   no strict;
   *{__PACKAGE__."::$method"} = sub {
     my $package = caller(0);

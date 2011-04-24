@@ -29,7 +29,3 @@ get "/{id:[0-9]+}" => sub {
 
   $res->send($req->captures->{id});
 };
-
-websocket "/websocket" => sub {
-  my ($req, $ws) = @_;
-};
