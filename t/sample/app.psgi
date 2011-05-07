@@ -46,3 +46,9 @@ get "/{id:[0-9]+}" => sub {
 
   $res->send($req->captures->{id});
 };
+
+get "/echo_param" => sub {
+  my ($req, $res) = @_;
+  my $value = $req->parameters->{key};
+  $res->send($value);
+};
